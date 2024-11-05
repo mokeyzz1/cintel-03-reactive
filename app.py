@@ -4,12 +4,15 @@ from shinywidgets import render_plotly
 from palmerpenguins import load_penguins
 import matplotlib.pyplot as plt
 import seaborn as sns
-from shiny import render 
+from shiny import reactive
 
+# Load the penguins dataset
 penguins_df = load_penguins()
 
+# Set up page options
 ui.page_opts(title="Moses Penguins Data", fillable=True)
 
+# Sidebar for user input controls
 with ui.sidebar(open="open"):
     ui.h2("Sidebar")
     ui.input_selectize(
@@ -31,21 +34,29 @@ with ui.sidebar(open="open"):
     ui.hr()
     ui.a("GitHub", href="https://github.com/mokeyzz1/cintel-02-data", target="_blank")
 
+# Reactive function to filter penguins_df based on selected species
+@reactive.calc
+def filtered_penguins():
+    selected_species = input.selected_species_list()
+    return penguins_df[penguins_df["species"].isin(selected_species)]
+
+# Layout for data table and grid
 with ui.layout_columns():
     with ui.card():
         ui.card_header("Penguins Data Table")
         
         @render.data_frame
         def penguinstable_df():
-            return render.DataTable(penguins_df, filters=False, selection_mode='row')
+            return render.DataTable(filtered_penguins(), filters=False, selection_mode='row')
 
     with ui.card():
         ui.card_header("Penguins Data Grid")
         
         @render.data_frame
         def penguinsgrid_df():
-            return render.DataGrid(penguins_df, filters=False, selection_mode="row")
+            return render.DataGrid(filtered_penguins(), filters=False, selection_mode="row")
 
+# Layout for Plotly and Seaborn visualizations
 with ui.layout_columns():
     with ui.card(full_screen=True):
         ui.card_header("Plotly Histogram: Species")
@@ -53,7 +64,7 @@ with ui.layout_columns():
         @render_plotly
         def plot1():
             fig = px.histogram(
-                penguins_df,
+                filtered_penguins(),
                 x="body_mass_g",
                 color="species",
                 title="Penguin Body Mass by Species",
@@ -68,7 +79,7 @@ with ui.layout_columns():
         @render.plot
         def seaborn_histogram():
             fig, ax = plt.subplots(figsize=(10, 6))
-            sns.histplot(data=penguins_df, x="body_mass_g", hue="species", multiple="stack", ax=ax)
+            sns.histplot(data=filtered_penguins(), x="body_mass_g", hue="species", multiple="stack", ax=ax)
             ax.set_title("Penguin Body Mass by Species")
             ax.set_xlabel("Body Mass (g)")
             ax.set_ylabel("Count")
@@ -79,11 +90,8 @@ with ui.card(full_screen=True):
     
     @render_plotly
     def plotly_scatterplot():
-        filtered_penguins = penguins_df[
-            penguins_df["species"].isin(input.selected_species_list())
-        ]
         fig = px.scatter(
-            filtered_penguins,
+            filtered_penguins(),
             x="flipper_length_mm",
             y="bill_length_mm",
             color="species",
