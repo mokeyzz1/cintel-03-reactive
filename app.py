@@ -36,7 +36,7 @@ with ui.sidebar(open="open"):
 
 # Reactive function to filter penguins_df based on selected species
 @reactive.calc
-def filtered_penguins():
+def filtered_data():
     selected_species = input.selected_species_list()
     return penguins_df[penguins_df["species"].isin(selected_species)]
 
@@ -47,14 +47,14 @@ with ui.layout_columns():
         
         @render.data_frame
         def penguinstable_df():
-            return render.DataTable(filtered_penguins(), filters=False, selection_mode='row')
+            return render.DataTable(filtered_data(), filters=False, selection_mode='row')
 
     with ui.card():
         ui.card_header("Penguins Data Grid")
         
         @render.data_frame
         def penguinsgrid_df():
-            return render.DataGrid(filtered_penguins(), filters=False, selection_mode="row")
+            return render.DataGrid(filtered_data(), filters=False, selection_mode="row")
 
 # Layout for Plotly and Seaborn visualizations
 with ui.layout_columns():
@@ -64,7 +64,7 @@ with ui.layout_columns():
         @render_plotly
         def plot1():
             fig = px.histogram(
-                filtered_penguins(),
+                filtered_data(),
                 x="body_mass_g",
                 color="species",
                 title="Penguin Body Mass by Species",
@@ -79,7 +79,7 @@ with ui.layout_columns():
         @render.plot
         def seaborn_histogram():
             fig, ax = plt.subplots(figsize=(10, 6))
-            sns.histplot(data=filtered_penguins(), x="body_mass_g", hue="species", multiple="stack", ax=ax)
+            sns.histplot(data=filtered_data(), x="body_mass_g", hue="species", multiple="stack", ax=ax)
             ax.set_title("Penguin Body Mass by Species")
             ax.set_xlabel("Body Mass (g)")
             ax.set_ylabel("Count")
@@ -91,7 +91,7 @@ with ui.card(full_screen=True):
     @render_plotly
     def plotly_scatterplot():
         fig = px.scatter(
-            filtered_penguins(),
+            filtered_data(),
             x="flipper_length_mm",
             y="bill_length_mm",
             color="species",
